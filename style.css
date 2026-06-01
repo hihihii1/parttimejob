@@ -1341,7 +1341,193 @@ input:checked + .slider:before {
 }
 
 /* Responsive CSS */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: 68px; /* Slightly taller for better touch targets */
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        padding: 6px 8px;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        border-bottom: none;
+        background-color: rgba(255, 255, 255, 0.92); /* Glassmorphism background */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        z-index: 1000;
+        border-radius: 16px 16px 0 0; /* Premium rounded top corner */
+    }
+    
+    .brand {
+        display: none !important;
+    }
+    
+    .nav-menu {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .nav-item {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 0;
+        font-size: 10px;
+        font-weight: 700;
+        text-align: center;
+        flex: 1;
+        border-radius: 10px;
+        background: transparent !important;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+        border: none;
+        height: 100%;
+    }
+    
+    .nav-item:hover {
+        background: transparent !important;
+    }
+    
+    .nav-item.active {
+        color: var(--primary-color);
+    }
+    
+    .nav-icon {
+        width: 22px;
+        height: 22px;
+        transition: transform 0.2s ease;
+    }
+    
+    .nav-item.active .nav-icon {
+        transform: scale(1.1); /* Premium zoom on active */
+    }
+    
+    .sidebar-footer {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px 16px 90px 16px; /* Extra bottom padding so it doesn't overlap bottom bar */
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .settings-container {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    /* Optimize headers for mobile */
+    .main-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+    
+    .header-title h1 {
+        font-size: 20px;
+    }
+    
+    .header-title p {
+        font-size: 12px;
+    }
+    
+    .btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+    
+    /* Make calendar days more compact but still perfectly shaped */
+    .calendar-card {
+        padding: 16px;
+    }
+    
+    .calendar-day {
+        font-size: 13px;
+        padding: 6px 2px;
+    }
+    
+    .holiday-label {
+        font-size: 8px;
+    }
+    
+    /* Modal responsive sizes */
+    .modal-backdrop {
+        padding: 12px;
+    }
+    
+    .modal-card {
+        padding: 20px;
+        max-height: 85vh;
+        border-radius: 16px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .modal-header h3 {
+        font-size: 17px;
+    }
+    
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 16px;
+    }
+    
+    .modal-footer button {
+        flex: 1;
+        min-width: 80px;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .history-detail-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    /* Hide some details in tables on mobile to avoid horizontal scroll if possible, or style them compactly */
+    .history-table th, .history-table td {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    /* OCR upload responsive tweaks */
+    .ocr-upload-zone {
+        padding: 16px 12px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
     .app-container {
         flex-direction: column;
     }
@@ -1365,35 +1551,12 @@ input:checked + .slider:before {
         grid-template-columns: 1fr;
     }
     
+    .settings-container {
+        grid-template-columns: 1fr !important;
+    }
+    
     .sidebar-footer {
-        display: none; /* Hide toggle from top bar on mobile */
-    }
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .history-detail-summary-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .main-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-    
-    .header-actions {
-        width: 100%;
-    }
-    
-    .header-actions button {
-        width: 100%;
-        justify-content: center;
+        margin-top: 24px;
     }
 }
 

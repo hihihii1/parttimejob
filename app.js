@@ -669,7 +669,7 @@ function renderAll() {
     renderDashboard();
     renderJobsList();
     renderHistory();
-    updateNotificationQuickToggle();
+    updateNotificationUI();
     updateOcrJobsDropdown(); // OCR 모달 내 셀렉트박스 정보 갱신
     
     // 로드된 OCR 업로드 이미지 및 스캔 결과 렌더링
@@ -1022,10 +1022,27 @@ function renderHistory() {
     }).join("");
 }
 
-// 5. 알림 퀵 토글 갱신
-function updateNotificationQuickToggle() {
-    const toggle = document.getElementById("quick-alert-toggle");
-    toggle.checked = state.notificationSettings.enabled;
+// 5. 알림 및 시간 설정 UI 갱신
+function updateNotificationUI() {
+    const enabled = state.notificationSettings.enabled;
+    const time = state.notificationSettings.time || "05:00";
+    
+    const quickAlertToggle = document.getElementById("quick-alert-toggle");
+    if (quickAlertToggle) quickAlertToggle.checked = enabled;
+    
+    const quickAlertTimeContainer = document.getElementById("quick-alert-time-container");
+    if (quickAlertTimeContainer) {
+        quickAlertTimeContainer.style.display = enabled ? "block" : "none";
+    }
+    
+    const quickAlertTime = document.getElementById("quick-alert-time");
+    if (quickAlertTime) quickAlertTime.value = time;
+    
+    const settingsAlertToggle = document.getElementById("settings-alert-toggle");
+    if (settingsAlertToggle) settingsAlertToggle.checked = enabled;
+    
+    const settingsAlertTime = document.getElementById("settings-alert-time");
+    if (settingsAlertTime) settingsAlertTime.value = time;
 }
 
 
@@ -1069,14 +1086,25 @@ function setupEventListeners() {
     document.getElementById("quick-alert-toggle").addEventListener("change", (e) => {
         state.notificationSettings.enabled = e.target.checked;
         saveState();
+        updateNotificationUI();
         
         if (state.notificationSettings.enabled) {
             requestNotificationPermission();
-            showToast("알림 설정 완료", "매일 오전 5시 무렵 당일 근무 일정이 있을 시 푸시 알림이 발송됩니다.");
+            showToast("알림 설정 완료", `매일 ${state.notificationSettings.time || "05:00"} 무렵 당일 근무 일정이 있을 시 푸시 알림이 발송됩니다.`);
         } else {
             showToast("알림 비활성화", "근무 푸시 알림이 비활성화되었습니다.");
         }
     });
+
+    // 알림 시간 핸들러 (사이드바)
+    const quickAlertTimeInput = document.getElementById("quick-alert-time");
+    if (quickAlertTimeInput) {
+        quickAlertTimeInput.addEventListener("change", (e) => {
+            state.notificationSettings.time = e.target.value;
+            saveState();
+            updateNotificationUI();
+        });
+    }
 
     // 알림 테스트 버튼
     document.getElementById("btn-test-notification").addEventListener("click", testNotification);
@@ -1217,12 +1245,11 @@ function setupSettingsTab() {
     if (settingsAlertCheckbox) {
         settingsAlertCheckbox.addEventListener("change", (e) => {
             state.notificationSettings.enabled = e.target.checked;
-            const quickAlert = document.getElementById("quick-alert-toggle");
-            if (quickAlert) quickAlert.checked = state.notificationSettings.enabled;
             saveState();
+            updateNotificationUI();
             if (state.notificationSettings.enabled) {
                 requestNotificationPermission();
-                showToast("알림 활성화", "매일 지정된 시간에 당일 근무 알림이 발송됩니다.");
+                showToast("알림 활성화", `매일 ${state.notificationSettings.time || "05:00"} 무렵 당일 근무 일정이 있을 시 푸시 알림이 발송됩니다.`);
             } else {
                 showToast("알림 비활성화", "근무 푸시 알림이 비활성화되었습니다.");
             }
@@ -1232,6 +1259,7 @@ function setupSettingsTab() {
         settingsAlertTimeInput.addEventListener("change", (e) => {
             state.notificationSettings.time = e.target.value;
             saveState();
+            updateNotificationUI();
         });
     }
     if (btnSettingsTestAlert) {
@@ -2179,7 +2207,9 @@ function startNotificationScheduler() {
         const hours = now.getHours();
         const minutes = now.getMinutes();
         
-        if (hours === 5 && minutes === 0 && lastNotifiedDate !== curDateStr) {
+        const [targetHours, targetMinutes] = (state.notificationSettings.time || "05:00").split(":").map(Number);
+        
+        if (hours === targetHours && minutes === targetMinutes && lastNotifiedDate !== curDateStr) {
             const todayLogs = state.logs.filter(log => log.date === curDateStr);
             if (todayLogs.length > 0) {
                 todayLogs.forEach(log => {
