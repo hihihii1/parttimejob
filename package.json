@@ -1,0 +1,21 @@
+{
+  "name": "salary-notifier",
+  "version": "1.0.0",
+  "description": "월급 알리미 - 스마트 월급 계산기 & 일정 관리 앱",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y http-server -p 3000"
+  },
+  "keywords": [
+    "salary",
+    "calculator",
+    "parttime",
+    "korean-labor-law",
+    "notifier"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

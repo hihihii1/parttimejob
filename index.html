@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월급 알리미 - 스마트 월급 계산기 & 일정 관리</title>
+    <!-- Google Fonts: Outfit & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Tesseract.js CDN for client-side OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2>월급 알리미</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="tab-dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9" rx="1" />
+                        <rect x="14" y="3" width="7" height="5" rx="1" />
+                        <rect x="14" y="12" width="7" height="9" rx="1" />
+                        <rect x="3" y="16" width="7" height="5" rx="1" />
+                    </svg>
+                    <span>대시보드 & 캘린더</span>
+                </button>
+                <button class="nav-item" data-tab="tab-jobs">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                    <span>아르바이트 관리</span>
+                </button>
+                <button class="nav-item" data-tab="tab-history">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                    <span>이전 기록 보기</span>
+                </button>
+                <button class="nav-item" data-tab="tab-settings">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>설정</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="notification-quick-toggle">
+                    <div class="toggle-header">
+                        <span class="label">⏰ 오전 5시 근무 알림</span>
+                        <label class="switch">
+                            <input type="checkbox" id="quick-alert-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-desc">오늘 근무 일정을 아침에 알려줍니다.</div>
+                    <button class="btn-text" id="btn-test-notification">알림 테스트해보기</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top bar -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="header-greeting">반가워요! 👋</h1>
+                    <p id="header-date">2026년 5월 26일 화요일</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btn-quick-add-log">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        근무 추가
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB: Dashboard & Calendar -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <!-- Left: Calendar & Daily Schedule -->
+                    <div class="grid-left">
+                        <div class="card calendar-card">
+                            <div class="calendar-header">
+                                <button class="btn-icon" id="btn-prev-month">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                </button>
+                                <h3 id="calendar-title">2026년 5월</h3>
+                                <button class="btn-icon" id="btn-next-month">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <div class="weekday sun">일</div>
+                                <div class="weekday">월</div>
+                                <div class="weekday">화</div>
+                                <div class="weekday">수</div>
+                                <div class="weekday">목</div>
+                                <div class="weekday">금</div>
+                                <div class="weekday sat">토</div>
+                            </div>
+                            <div class="calendar-days" id="calendar-days-grid">
+                                <!-- Days will be generated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Today's Schedule -->
+                        <div class="card today-schedule-card">
+                            <div class="card-header">
+                                <h3>📅 오늘의 근무 일정</h3>
+                                <span class="tag-today" id="today-tag-date">5/26 (화)</span>
+                            </div>
+                            <div id="today-schedule-list" class="schedule-list">
+                                <!-- Will be generated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Auto Register from Image Card -->
+                        <div class="card ocr-schedule-card">
+                            <div class="card-header">
+                                <h3>📋 이미지로 근무 자동 등록</h3>
+                            </div>
+                            <div class="ocr-body">
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label for="ocr-name">본인 이름 입력 <span class="required">*</span></label>
+                                    <input type="text" id="ocr-name" placeholder="예: 홍길동">
+                                </div>
+                                <div class="ocr-upload-zone" id="ocr-dropzone">
+                                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:36px; height:36px; margin: 0 auto 8px; color: var(--text-muted); display:block;">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                    <p class="dropzone-text" style="font-size:13px; font-weight:700; text-align:center;">근무 스케줄 이미지 업로드</p>
+                                    <span class="dropzone-sub" style="font-size:11px; color:var(--text-muted); display:block; text-align:center; margin-top:2px;">드래그하거나 클릭하여 여러 파일 선택</span>
+                                    <input type="file" id="ocr-file-input" accept="image/*" multiple class="hidden">
+                                </div>
+                                <div id="ocr-preview-container" class="hidden">
+                                    <div class="ocr-image-wrapper-global" style="position: relative;">
+                                        <div id="ocr-scan-bar" class="ocr-scan-bar hidden"></div>
+                                        <div class="ocr-preview-grid" id="ocr-preview-grid">
+                                            <!-- Thumbnails will be generated by JS -->
+                                        </div>
+                                    </div>
+                                    <div class="ocr-preview-actions" style="display: flex; gap: 8px; margin-top: 8px;">
+                                        <button type="button" class="btn btn-secondary" id="btn-ocr-add-more" style="flex: 1; padding: 6px 12px; font-size:12px; justify-content:center;">이미지 추가</button>
+                                        <button type="button" class="btn btn-secondary" id="btn-ocr-remove-all" style="flex: 1; padding: 6px 12px; font-size:12px; justify-content:center; color: var(--danger-color); border-color: var(--danger-color);">모두 삭제</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="btn-ocr-analyze" style="width: 100%; justify-content: center; margin-top: 12px;">
+                                    🔍 일정 자동 분석
+                                </button>
+                                
+                                <!-- Result Area -->
+                                <div id="ocr-result-panel" class="ocr-result-panel hidden">
+                                    <div class="result-title">📢 분석 결과 감지 완료!</div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4;">
+                                        감지된 일정을 확인/수정하세요. 체크한 항목들만 근무로 일괄 등록됩니다.
+                                    </p>
+                                    <div class="table-responsive" style="margin-bottom: 12px; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                                        <table class="detected-shifts-table" style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                                            <thead>
+                                                <tr style="background-color: var(--bg-color); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1;">
+                                                    <th style="padding: 8px; width: 30px; text-align: center;"><input type="checkbox" id="ocr-check-all" checked></th>
+                                                    <th style="padding: 8px;">일자</th>
+                                                    <th style="padding: 8px; width: 80px;">시작</th>
+                                                    <th style="padding: 8px; width: 80px;">종료</th>
+                                                    <th style="padding: 8px; width: 60px;">휴게(분)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="ocr-detected-shifts-tbody">
+                                                <!-- Populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 12px;">
+                                        <label for="ocr-target-job-id">등록할 아르바이트 매핑</label>
+                                        <select id="ocr-target-job-id" style="width: 100%;">
+                                            <!-- Populated by JS -->
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="btn-ocr-apply-logs" style="width: 100%; justify-content: center; margin-top: 12px; background: var(--success-color); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);">
+                                        ✅ 선택한 일정으로 근무 일괄 등록
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Monthly Financial Statistics -->
+                    <div class="grid-right">
+                        <!-- Total Salary Card -->
+                        <div class="card total-salary-card">
+                            <div class="card-subtitle">이번 달 예상 총 급여</div>
+                            <div class="salary-display">
+                                <span class="amount" id="total-expected-salary">0</span>
+                                <span class="currency">원</span>
+                            </div>
+                            <div class="salary-progress-container">
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" id="salary-progress-fill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span id="salary-progress-text">기록된 근무 0일</span>
+                                    <span id="salary-progress-target">이번 달 누적</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Calculations Breakdown -->
+                        <div class="card breakdown-card">
+                            <h3>💰 급여 상세 내역</h3>
+                            <div class="breakdown-list">
+                                <div class="breakdown-item">
+                                    <div class="item-label">
+                                        <span class="dot base"></span> 기본 월급
+                                    </div>
+                                    <div class="item-value" id="breakdown-base">0원</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="item-label">
+                                        <span class="dot weekly"></span> 주휴수당
+                                    </div>
+                                    <div class="item-value text-success" id="breakdown-weekly">+ 0원</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="item-label">
+                                        <span class="dot night"></span> 야간수당 (22:00 - 06:00)
+                                    </div>
+                                    <div class="item-value text-success" id="breakdown-night">+ 0원</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="item-label">
+                                        <span class="dot break"></span> 휴게시간 공제
+                                    </div>
+                                    <div class="item-value text-danger" id="breakdown-break">- 0원</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="item-label">
+                                        <span class="dot holiday"></span> 공휴일 수당 (1.5배)
+                                    </div>
+                                    <div class="item-value text-success" id="breakdown-holiday">+ 0원</div>
+                                </div>
+                                <hr class="divider">
+                                <div class="breakdown-item total">
+                                    <div class="item-label">합계 예상 실령액</div>
+                                    <div class="item-value highlight" id="breakdown-total">0원</div>
+                                </div>
+                            </div>
+                            <div class="salary-calc-notice">
+                                <p>💡 주휴수당은 주 15시간 이상 근무 시 자동 가산됩니다.</p>
+                                <p>💡 야간수당은 밤 10시 ~ 아침 6시 근무 시간의 50%가 가산됩니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- Jobs Summary In Dashboard -->
+                        <div class="card dash-jobs-card">
+                            <h3>💼 아르바이트별 예상 급여</h3>
+                            <div id="dash-jobs-list" class="dash-jobs-list">
+                                <!-- Will be generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Manage Jobs -->
+            <section id="tab-jobs" class="tab-content">
+                <div class="section-header">
+                    <h2>💼 내 아르바이트 목록</h2>
+                    <button class="btn btn-primary" id="btn-add-job">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        아르바이트 추가
+                    </button>
+                </div>
+                <div class="jobs-grid" id="jobs-container">
+                    <!-- Will be generated by JS -->
+                </div>
+            </section>
+
+            <!-- TAB: History -->
+            <section id="tab-history" class="tab-content">
+                <div class="section-header">
+                    <h2>📊 이전 기록 보기</h2>
+                </div>
+                
+                <div class="history-container">
+                    <div class="card history-stats-card">
+                        <h3>월별 급여 및 근무 통계 (최근 12개월)</h3>
+                        <div class="history-chart-wrapper">
+                            <!-- Visual Bar Chart using CSS flex and heights -->
+                            <div class="bar-chart" id="history-chart">
+                                <!-- Generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card history-list-card">
+                        <h3>월별 상세 내역</h3>
+                        <div class="table-responsive">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>근무 월</th>
+                                        <th>등록 아르바이트</th>
+                                        <th>총 근무 시간</th>
+                                        <th>기본급</th>
+                                        <th>주휴수당</th>
+                                        <th>야간수당</th>
+                                        <th>예상 총 월급</th>
+                                        <th>상세보기</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body">
+                                    <!-- Generated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: Settings -->
+            <section id="tab-settings" class="tab-content">
+                <div class="section-header">
+                    <h2>⚙️ 설정</h2>
+                </div>
+                
+                <div class="settings-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 8px;">
+                    <!-- Left column -->
+                    <div class="settings-column" style="display: flex; flex-direction: column; gap: 24px;">
+                        <!-- User Info Card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <h3>👤 사용자 정보</h3>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="settings-username">사용자 이름</label>
+                                <input type="text" id="settings-username" placeholder="예: 홍길동" style="width: 100%;">
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+                                    스케줄 표 이미지에서 본인의 일정을 자동 인식할 때 기본 매칭 이름으로 사용됩니다.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Calculation Settings Card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <h3>💰 급여 계산 설정</h3>
+                            <div class="checkbox-options-grid" style="display: block;">
+                                <label class="checkbox-option" style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--bg-color); display: flex; cursor: pointer; transition: all var(--transition-speed); gap: 12px;">
+                                    <input type="checkbox" id="settings-pay-during-break" style="margin-top: 4px;">
+                                    <div class="checkbox-label-group">
+                                        <span class="title" style="font-weight: 700; font-size: 14px; display: block; color: var(--text-main);">휴게시간 급여 지급 (유급 휴게시간 설정)</span>
+                                        <span class="desc" style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; line-height: 1.4;">
+                                            활성화하면 아르바이트 개별 휴게시간 차감 설정과 무관하게 모든 근무의 휴게시간도 실근무 시간으로 취급하여 시급이 지급됩니다.
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="settings-column" style="display: flex; flex-direction: column; gap: 24px;">
+                        <!-- Notification Card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <h3>🔔 알림 설정</h3>
+                            <div class="checkbox-options-grid" style="display: block; margin-bottom: 16px;">
+                                <label class="checkbox-option" style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--bg-color); display: flex; cursor: pointer; transition: all var(--transition-speed); gap: 12px;">
+                                    <input type="checkbox" id="settings-alert-toggle" style="margin-top: 4px;">
+                                    <div class="checkbox-label-group">
+                                        <span class="title" style="font-weight: 700; font-size: 14px; display: block; color: var(--text-main);">오전 5시 당일 근무 알림</span>
+                                        <span class="desc" style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; line-height: 1.4;">
+                                            오늘 예정된 근무 일정이 있는 날 아침에 알림을 발송합니다.
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label for="settings-alert-time">알림 테스트 및 발송 시간</label>
+                                <input type="time" id="settings-alert-time" value="05:00" style="width: 100%;">
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btn-settings-test-alert" style="width: 100%; justify-content: center;">🔔 근무 알림 즉시 테스트하기</button>
+                        </div>
+
+                        <!-- Data Reset Card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <h3>⚠️ 데이터 초기화</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
+                                등록하신 아르바이트 정보, 근무 이력, 환경 설정 등 모든 데이터가 로컬 저장소에서 제거되고 초기화됩니다. 이 작업은 되돌릴 수 없습니다.
+                            </p>
+                            <button type="button" class="btn btn-danger" id="btn-settings-reset-data" style="width: 100%; justify-content: center;">🚨 전체 데이터 초기화</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Add/Edit Job -->
+    <div class="modal-backdrop" id="modal-job">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-job-title">아르바이트 추가</h3>
+                <button class="btn-close" id="btn-close-job-modal">&times;</button>
+            </div>
+            <form id="form-job" class="modal-form">
+                <input type="hidden" id="job-id">
+                
+                <div class="form-group">
+                    <label for="job-name">아르바이트 이름 <span class="required">*</span></label>
+                    <input type="text" id="job-name" required placeholder="예: CU 편의점, 스타벅스">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="job-wage">시급 (원) <span class="required">*</span></label>
+                        <input type="number" id="job-wage" required min="0" value="10030" placeholder="10030">
+                    </div>
+                    <div class="form-group">
+                        <label for="job-break">기본 휴게시간 (분)</label>
+                        <input type="number" id="job-break" min="0" value="0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="job-start-time">기본 시작 시간</label>
+                        <input type="time" id="job-start-time" value="09:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="job-end-time">기본 종료 시간</label>
+                        <input type="time" id="job-end-time" value="18:00">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>급여 계산 방식 설정</label>
+                    <div class="checkbox-options-grid">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="job-use-weekly-allowance" checked>
+                            <span class="checkbox-custom"></span>
+                            <div class="checkbox-label-group">
+                                <span class="title">주휴수당 포함</span>
+                                <span class="desc">주 15시간 이상 근무 시 주당 최대 8시간분 지급</span>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="job-use-night-allowance" checked>
+                            <span class="checkbox-custom"></span>
+                            <div class="checkbox-label-group">
+                                <span class="title">야간수당 포함</span>
+                                <span class="desc">22:00 ~ 익일 06:00 근무 시 50% 가산</span>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-option">
+                                    <input type="checkbox" id="job-use-break-deduction" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <div class="checkbox-label-group">
+                                        <span class="title">휴게시간 차감</span>
+                                        <span class="desc">근무 시간에서 휴게시간을 차감하고 급여 계산</span>
+                                    </div>
+                                </label>
+
+                                <label class="checkbox-option">
+                                    <input type="checkbox" id="job-use-holiday-allowance" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <div class="checkbox-label-group">
+                                        <span class="title">공휴일 수당 포함</span>
+                                        <span class="desc">대한민국 공휴일에 근무 시 1.5배(50% 가산)로 급여 계산</span>
+                                    </div>
+                                </label>
+                            </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-job">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-job">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Edit Daily Work Log -->
+    <div class="modal-backdrop" id="modal-log">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-log-title">근무 기록 입력</h3>
+                <button class="btn-close" id="btn-close-log-modal">&times;</button>
+            </div>
+            <form id="form-log" class="modal-form">
+                <input type="hidden" id="log-id">
+                
+                <div class="form-group">
+                    <label for="log-date">근무 일자</label>
+                    <input type="date" id="log-date" required>
+                </div>
+
+                <!-- 공휴일 직접 설정 구역 -->
+                <div class="form-group holiday-setup-section" style="margin-bottom: 20px;">
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="log-is-holiday">
+                        <span class="checkbox-custom"></span>
+                        <div class="checkbox-label-group">
+                            <span class="title">이 날을 공휴일로 지정</span>
+                            <span class="desc">이 날에 공휴일 수당(1.5배)을 적용하고 달력에 표시합니다.</span>
+                        </div>
+                    </label>
+                    <div id="log-holiday-name-group" class="form-group" style="margin-top: 12px; margin-bottom: 0; display: none;">
+                        <label for="log-holiday-name" style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; display: block;">공휴일 이름</label>
+                        <input type="text" id="log-holiday-name" placeholder="예: 창립기념일, 대체휴무" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 14px;">
+                    </div>
+                </div>
+
+                <!-- 근무 기록 여부 토글 구역 -->
+                <div class="form-group work-log-toggle-section" id="work-log-toggle-section" style="margin-bottom: 20px;">
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="log-has-work" checked>
+                        <span class="checkbox-custom"></span>
+                        <div class="checkbox-label-group">
+                            <span class="title">이 날에 근무 기록 입력</span>
+                            <span class="desc">이 날의 출퇴근 시간 및 휴게 시간을 기록합니다.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="work-log-details-container">
+                    <div class="form-group">
+                        <label for="log-job-id">아르바이트 선택 <span class="required">*</span></label>
+                        <select id="log-job-id" required>
+                            <!-- Jobs will be populated by JS -->
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="log-start-time">시작 시간</label>
+                            <input type="time" id="log-start-time" required value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="log-end-time">종료 시간</label>
+                            <input type="time" id="log-end-time" required value="18:00">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="log-break-start">휴식 시작 시간</label>
+                            <input type="time" id="log-break-start" value="">
+                        </div>
+                        <div class="form-group">
+                            <label for="log-break-end">휴식 종료 시간</label>
+                            <input type="time" id="log-break-end" value="">
+                        </div>
+                    </div>
+
+                    <!-- Hidden input to preserve code compatibility elsewhere -->
+                    <input type="hidden" id="log-break" value="0">
+
+                    <div class="form-group">
+                        <label for="log-calculated-hours">실제 근무 시간 (자동 계산)</label>
+                        <input type="text" id="log-calculated-hours" readonly value="9시간 (휴게 0분 제외)">
+                    </div>
+                </div>
+
+                <!-- 시각적 근무/휴식 시간 타임라인 막대 -->
+                <div id="log-timeline-container" class="form-group" style="margin-top: 16px; margin-bottom: 16px; display: none;">
+                    <label style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">근무 및 휴식 시간 타임라인</label>
+                    <div class="timeline-wrapper" style="position: relative; height: 36px; background-color: var(--bg-color); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); overflow: hidden; display: flex; align-items: center;">
+                        <!-- Shift bar -->
+                        <div id="timeline-shift-bar" style="position: absolute; height: 100%; background: linear-gradient(90deg, #E0F2FE 0%, #BAE6FD 100%); left: 0%; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 12px; font-weight: 700; color: #0369A1;">
+                            <span id="timeline-start-label">09:00</span>
+                            <span id="timeline-duration-label">9시간 근무</span>
+                            <span id="timeline-end-label">18:00</span>
+                        </div>
+                        <!-- Night work overlay(s) -->
+                        <div id="timeline-night-bars-container" style="position: absolute; height: 100%; top: 0; left: 0; right: 0; pointer-events: none;"></div>
+                        <!-- Break bar overlay -->
+                        <div id="timeline-break-bar" style="position: absolute; height: 100%; background-color: #FEE2E2; border-left: 2px solid #EF4444; border-right: 2px solid #EF4444; left: 0%; width: 0%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #B91C1C; transition: all 0.2s; display: none;">
+                            <span>휴식</span>
+                        </div>
+                    </div>
+                    <!-- Timeline legend -->
+                    <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 12px; height: 12px; background-color: #BAE6FD; border-radius: 3px; display: inline-block;"></span> 근무시간
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 12px; height: 12px; background-color: rgba(99, 102, 241, 0.35); border-radius: 3px; display: inline-block;"></span> 야간근무 (22시~06시)
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 12px; height: 12px; background-color: #FEE2E2; border: 1px solid #EF4444; border-radius: 3px; display: inline-block;"></span> 휴식시간
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 실시간 예상 급여 표시 구역 -->
+                <div id="log-salary-preview-card" style="margin-top: 20px; padding: 16px; border: 1.5px solid var(--success-color); border-radius: var(--border-radius-md); background: var(--success-light); display: none; box-shadow: var(--shadow-sm);">
+                    <div style="font-size: 13px; font-weight: 700; color: var(--success-color); margin-bottom: 4px;">💰 이 날짜의 예상 급여 합계</div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--success-color); margin-bottom: 8px;">
+                        <span id="log-total-salary-preview">0</span>원
+                    </div>
+                    <div id="log-salary-breakdown-preview" style="font-size: 12px; color: var(--text-main); line-height: 1.5; font-weight: 600;">
+                        <!-- 상세 계산 내역 표시 -->
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger mr-auto hidden" id="btn-delete-log">삭제</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-log">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-log">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: History Month Details -->
+    <div class="modal-backdrop" id="modal-history-detail">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3 id="history-detail-title">2026년 5월 상세 근무 기록</h3>
+                <button class="btn-close" id="btn-close-history-detail-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-detail-summary-grid">
+                    <div class="sum-card">
+                        <span class="label">총 근무일</span>
+                        <span class="val" id="hist-detail-days">0일</span>
+                    </div>
+                    <div class="sum-card">
+                        <span class="label">총 근무 시간</span>
+                        <span class="val" id="hist-detail-hours">0시간</span>
+                    </div>
+                    <div class="sum-card highlight">
+                        <span class="label">총 예상 급여</span>
+                        <span class="val" id="hist-detail-salary">0원</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>일자</th>
+                                <th>아르바이트</th>
+                                <th>근무 시간대</th>
+                                <th>실근무 시간 (휴게 차감)</th>
+                                <th>기본급</th>
+                                <th>야간수당 (야간근무)</th>
+                                <th>예상 급여</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-detail-table-body">
+                            <!-- Generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="history-weekly-allowance-details">
+                    <h4>🗓️ 주별 주휴수당 내역</h4>
+                    <div class="table-responsive">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>주차 (기간)</th>
+                                    <th>아르바이트</th>
+                                    <th>주간 실근무 시간</th>
+                                    <th>주휴수당 적용 여부</th>
+                                    <th>주휴수당 금액</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-detail-weekly-body">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-close-history-detail">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
