@@ -938,6 +938,13 @@ function renderJobsList() {
                         공휴일수당 ${job.useHolidayAllowance ? 'ON' : 'OFF'}
                     </span>
                 </div>
+                
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 16px; font-size: 13px; padding: 10px 12px; justify-content: center; gap: 6px; border-radius: var(--border-radius-md); font-weight: 700;" onclick="generateJobCode('${job.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3M15.5 7.5L19 4"/>
+                    </svg>
+                    코드생성
+                </button>
             </div>
         `;
     }).join("");
@@ -1124,6 +1131,23 @@ function setupEventListeners() {
     
     // 로그 삭제 버튼
     document.getElementById("btn-delete-log").addEventListener("click", onDeleteLogClick);
+
+    // 코드로 일괄 등록 버튼 및 입력 필드 이벤트 바인딩
+    const btnImportCode = document.getElementById("btn-import-code");
+    if (btnImportCode) {
+        btnImportCode.addEventListener("click", () => {
+            window.importJobCode();
+        });
+    }
+    const logImportInput = document.getElementById("log-import-code");
+    if (logImportInput) {
+        logImportInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                window.importJobCode();
+            }
+        });
+    }
 
     // 공휴일 체크박스 토글에 따른 이름 입력칸 표시여부 변경
     const holidayCheckbox = document.getElementById("log-is-holiday");
@@ -1330,6 +1354,136 @@ function deleteJob(id) {
         showToast("삭제 완료", `'${job.name}' 아르바이트가 삭제되었습니다.`);
     }
 }
+
+// 아르바이트 설정 및 근무 일정을 코드로 생성
+window.generateJobCode = function(jobId) {
+    const job = state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+    
+    const jobLogs = state.logs.filter(l => l.jobId === jobId);
+    
+    const payload = {
+        job: {
+            name: job.name,
+            wage: job.wage,
+            defaultStartTime: job.defaultStartTime,
+            defaultEndTime: job.defaultEndTime,
+            defaultBreak: job.defaultBreak,
+            useWeeklyAllowance: job.useWeeklyAllowance,
+            useNightAllowance: job.useNightAllowance,
+            useBreakDeduction: job.useBreakDeduction,
+            useHolidayAllowance: job.useHolidayAllowance,
+            colorIndex: job.colorIndex
+        },
+        logs: jobLogs.map(l => ({
+            date: l.date,
+            startTime: l.startTime,
+            endTime: l.endTime,
+            breakStartTime: l.breakStartTime || "",
+            breakEndTime: l.breakEndTime || "",
+            breakMinutes: l.breakMinutes || 0
+        }))
+    };
+    
+    try {
+        const jsonStr = JSON.stringify(payload);
+        // UTF-8 호환 Base64 인코딩
+        const base64Code = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            return String.fromCharCode('0x' + p1);
+        }));
+        
+        navigator.clipboard.writeText(base64Code).then(() => {
+            showToast("코드 생성 및 복사 완료", `'${job.name}' 아르바이트의 설정과 일정 코드가 클립보드에 복사되었습니다! 근무 추가 창에서 등록해 보세요.`, "toast-success");
+        }).catch(err => {
+            // 복사 실패 시 fallback
+            prompt("아래 코드를 복사하여 근무 추가 창에 붙여넣으세요:", base64Code);
+        });
+    } catch (e) {
+        console.error("코드 생성 실패:", e);
+        showToast("코드 생성 실패", "코드 생성 중 오류가 발생했습니다.", "toast-danger");
+    }
+};
+
+// 입력받은 코드를 해독하여 아르바이트 및 근무 일정을 한 번에 복원
+window.importJobCode = function() {
+    const codeInput = document.getElementById("log-import-code");
+    if (!codeInput) return;
+    const base64Code = codeInput.value.trim();
+    if (!base64Code) {
+        showToast("코드 입력 필요", "생성된 코드를 입력한 후 등록해 주세요.", "toast-danger");
+        return;
+    }
+    
+    try {
+        // UTF-8 호환 Base64 디코딩
+        const jsonStr = decodeURIComponent(atob(base64Code).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        const data = JSON.parse(jsonStr);
+        if (!data || !data.job || !data.job.name || !Array.isArray(data.logs)) {
+            throw new Error("Invalid code format");
+        }
+        
+        const jobData = data.job;
+        const logList = data.logs;
+        
+        // 1. 동일한 이름의 아르바이트가 있는지 확인
+        let targetJob = state.jobs.find(j => j.name === jobData.name);
+        if (!targetJob) {
+            targetJob = {
+                id: `job-${Date.now()}`,
+                name: jobData.name,
+                wage: jobData.wage,
+                defaultStartTime: jobData.defaultStartTime,
+                defaultEndTime: jobData.defaultEndTime,
+                defaultBreak: jobData.defaultBreak,
+                useWeeklyAllowance: jobData.useWeeklyAllowance,
+                useNightAllowance: jobData.useNightAllowance,
+                useBreakDeduction: jobData.useBreakDeduction,
+                useHolidayAllowance: jobData.useHolidayAllowance !== false,
+                colorIndex: state.jobs.length
+            };
+            state.jobs.push(targetJob);
+        }
+        
+        // 2. 일정 일괄 등록
+        let addedCount = 0;
+        let dupCount = 0;
+        logList.forEach(log => {
+            // 동일 날짜에 동일 알바 근무 기록이 있으면 덮어쓰기
+            const dupIdx = state.logs.findIndex(l => l.date === log.date && l.jobId === targetJob.id);
+            const logData = {
+                id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                date: log.date,
+                jobId: targetJob.id,
+                startTime: log.startTime,
+                endTime: log.endTime,
+                breakStartTime: log.breakStartTime || "",
+                breakEndTime: log.breakEndTime || "",
+                breakMinutes: log.breakMinutes || 0
+            };
+            
+            if (dupIdx !== -1) {
+                state.logs[dupIdx] = logData;
+                dupCount++;
+            } else {
+                state.logs.push(logData);
+                addedCount++;
+            }
+        });
+        
+        saveState();
+        closeLogModal();
+        renderAll();
+        
+        showToast("일정 일괄 등록 성공", `'${targetJob.name}' 근무 일정이 등록되었습니다. (신규: ${addedCount}건, 덮어쓰기: ${dupCount}건)`, "toast-success");
+        codeInput.value = "";
+    } catch (e) {
+        console.error("코드 디코딩 및 등록 실패:", e);
+        showToast("등록 실패", "올바르지 않은 코드 형식이거나 처리 중 오류가 발생했습니다.", "toast-danger");
+    }
+};
 
 
 // --- 근무 기록(Log) 관련 CRUD 기능 ---
