@@ -1348,7 +1348,7 @@ input:checked + .slider:before {
     
     .sidebar {
         width: 100%;
-        height: 68px; /* Slightly taller for better touch targets */
+        height: 64px; /* Clean mobile tab bar height */
         position: fixed;
         bottom: 0;
         top: auto;
@@ -1357,16 +1357,16 @@ input:checked + .slider:before {
         flex-direction: row;
         justify-content: space-around;
         align-items: center;
-        padding: 6px 8px;
+        padding: 4px 6px;
         border-right: none;
         border-top: 1px solid var(--border-color);
         border-bottom: none;
-        background-color: rgba(255, 255, 255, 0.92); /* Glassmorphism background */
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        background-color: rgba(255, 255, 255, 0.94); /* Glassmorphism background */
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
         z-index: 1000;
-        border-radius: 16px 16px 0 0; /* Premium rounded top corner */
+        border-radius: 16px 16px 0 0;
     }
     
     .brand {
@@ -1387,9 +1387,9 @@ input:checked + .slider:before {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        padding: 6px 0;
-        font-size: 10px;
+        gap: 3px;
+        padding: 4px 0;
+        font-size: 9.5px;
         font-weight: 700;
         text-align: center;
         flex: 1;
@@ -1410,13 +1410,13 @@ input:checked + .slider:before {
     }
     
     .nav-icon {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         transition: transform 0.2s ease;
     }
     
     .nav-item.active .nav-icon {
-        transform: scale(1.1); /* Premium zoom on active */
+        transform: scale(1.1);
     }
     
     .sidebar-footer {
@@ -1426,104 +1426,268 @@ input:checked + .slider:before {
     .main-content {
         margin-left: 0;
         width: 100%;
-        padding: 16px 16px 90px 16px; /* Extra bottom padding so it doesn't overlap bottom bar */
+        padding: 16px 12px 84px 12px; /* Balanced margins to maximize space */
+    }
+    
+    /* Mobile Card Optimizations (Fixes screen ratio issues) */
+    .card {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        border-radius: var(--border-radius-md) !important;
+    }
+    
+    .card h3 {
+        font-size: 16px !important;
+        margin-bottom: 14px !important;
     }
     
     .dashboard-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 14px;
     }
     
     .settings-container {
         grid-template-columns: 1fr !important;
-        gap: 16px !important;
+        gap: 14px !important;
     }
     
-    /* Optimize headers for mobile */
+    /* Estimated Pay Card Text Size Optimization on Mobile */
+    .total-salary-card .amount {
+        font-size: 32px !important;
+    }
+    
+    .total-salary-card .currency {
+        font-size: 16px !important;
+    }
+    
+    /* Breakdown Item compact text spacing */
+    .breakdown-list {
+        gap: 10px !important;
+    }
+    
+    .breakdown-item {
+        font-size: 13px !important;
+    }
+    
+    .breakdown-item.total .highlight {
+        font-size: 17px !important;
+    }
+    
+    .salary-calc-notice {
+        padding: 10px 12px !important;
+        margin-top: 14px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Textbox and Input Spacing Optimizations (Fixes form spacing issues) */
+    .form-group {
+        gap: 4px !important; /* Reduced label-to-input gap */
+    }
+    
+    .form-group label {
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        color: var(--text-main) !important;
+    }
+    
+    .form-group input, 
+    .form-group select {
+        padding: 10px 12px !important; /* Compact inner spacing */
+        border-radius: var(--border-radius-sm) !important;
+        font-size: 13px !important; /* Proper text size proportion */
+    }
+    
+    /* Compact check box settings on mobile */
+    .checkbox-option {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+        border-radius: var(--border-radius-sm) !important;
+    }
+    
+    .checkbox-custom {
+        min-width: 16px !important;
+        height: 16px !important;
+        border-radius: 4px !important;
+        margin-top: 1px !important;
+    }
+    
+    .checkbox-option input:checked + .checkbox-custom::after {
+        left: 4.5px !important;
+        top: 1px !important;
+        width: 4px !important;
+        height: 8px !important;
+    }
+    
+    .checkbox-label-group .title {
+        font-size: 13px !important;
+    }
+    
+    .checkbox-label-group .desc {
+        font-size: 11px !important;
+        margin-top: 2px !important;
+    }
+    
+    /* Settings specific inputs */
+    .settings-card input[type="text"],
+    .settings-card input[type="time"] {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Header layout optimization */
     .main-header {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 20px;
-        gap: 12px;
+        margin-bottom: 16px;
+        gap: 8px;
     }
     
     .header-title h1 {
-        font-size: 20px;
+        font-size: 18px !important;
     }
     
     .header-title p {
-        font-size: 12px;
+        font-size: 11px !important;
     }
     
     .btn {
-        padding: 10px 14px;
-        font-size: 13px;
-        border-radius: 10px;
+        padding: 8px 12px !important;
+        font-size: 12.5px !important;
+        border-radius: var(--border-radius-sm) !important;
     }
     
-    /* Make calendar days more compact but still perfectly shaped */
+    /* Compact Calendar Days & Spacing */
     .calendar-card {
-        padding: 16px;
+        padding: 12px !important;
+    }
+    
+    .calendar-header {
+        margin-bottom: 14px !important;
+    }
+    
+    .calendar-header h3 {
+        font-size: 16px !important;
+    }
+    
+    .calendar-weekdays {
+        margin-bottom: 8px !important;
+        padding-bottom: 6px !important;
+        font-size: 11px !important;
+    }
+    
+    .calendar-days {
+        row-gap: 4px !important;
+        column-gap: 3px !important;
     }
     
     .calendar-day {
-        font-size: 13px;
-        padding: 6px 2px;
+        font-size: 12px !important;
+        padding: 4px 2px !important;
+        border-radius: var(--border-radius-sm) !important;
     }
     
     .holiday-label {
-        font-size: 8px;
+        font-size: 8px !important;
+        transform: scale(0.9) !important;
     }
     
-    /* Modal responsive sizes */
+    .day-dots {
+        gap: 2px !important;
+        height: 4px !important;
+    }
+    
+    .day-dot {
+        width: 4px !important;
+        height: 4px !important;
+    }
+    
+    /* Modal Layout adjustments on smartphones */
     .modal-backdrop {
-        padding: 12px;
+        padding: 10px;
     }
     
     .modal-card {
-        padding: 20px;
-        max-height: 85vh;
-        border-radius: 16px;
+        padding: 16px 16px 20px 16px !important;
+        max-height: 88vh;
+        border-radius: var(--border-radius-md) !important;
+    }
+    
+    .modal-header {
+        margin-bottom: 16px !important;
+    }
+    
+    .modal-header h3 {
+        font-size: 16px !important;
+    }
+    
+    .modal-form {
+        gap: 12px !important;
     }
     
     .form-row {
         grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .modal-header h3 {
-        font-size: 17px;
+        gap: 10px !important;
     }
     
     .modal-footer {
         flex-wrap: wrap;
-        gap: 8px;
-        padding-top: 16px;
+        gap: 6px;
+        padding-top: 12px !important;
+        margin-top: 10px !important;
     }
     
     .modal-footer button {
         flex: 1;
-        min-width: 80px;
+        min-width: 70px;
         justify-content: center;
-        padding: 10px 14px;
-        font-size: 13px;
+        padding: 9px 12px !important;
+        font-size: 12.5px !important;
     }
     
+    /* Summary details card on history modal */
     .history-detail-summary-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 8px !important;
+        margin-bottom: 16px !important;
     }
     
-    /* Hide some details in tables on mobile to avoid horizontal scroll if possible, or style them compactly */
+    .history-detail-summary-grid .sum-card {
+        padding: 10px 12px !important;
+    }
+    
+    .history-detail-summary-grid .sum-card .val {
+        font-size: 15px !important;
+    }
+    
+    /* History table responsive padding */
     .history-table th, .history-table td {
-        padding: 10px 12px;
-        font-size: 12px;
+        padding: 8px 10px !important;
+        font-size: 11.5px !important;
     }
     
-    /* OCR upload responsive tweaks */
+    /* Scanned Shift result list styling on mobile */
+    .detected-shifts-table th, .detected-shifts-table td {
+        padding: 6px 4px !important;
+        font-size: 11px !important;
+    }
+    .detected-shifts-table input {
+        font-size: 11px !important;
+        padding: 4px !important;
+    }
+    
     .ocr-upload-zone {
-        padding: 16px 12px;
+        padding: 14px 10px !important;
+    }
+    
+    .ocr-upload-zone svg {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .ocr-preview-grid {
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important;
     }
 }
 
