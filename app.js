@@ -13,7 +13,8 @@ let state = {
     scannedShifts: [],
     scannedImages: [],
     customHolidays: {},
-    googleHolidays: {}
+    googleHolidays: {},
+    geminiApiKey: ""
 };
 
 // 기본 파스텔 색상 정의 (아르바이트별 시각적 구분)
@@ -66,6 +67,7 @@ function loadState() {
             if (state.scannedImages === undefined) state.scannedImages = [];
             if (state.customHolidays === undefined) state.customHolidays = {};
             if (state.googleHolidays === undefined) state.googleHolidays = {};
+            if (state.geminiApiKey === undefined) state.geminiApiKey = "";
         } catch (e) {
             console.error("데이터 로드 중 오류 발생, 초기화합니다.", e);
             seedDemoData();
@@ -85,6 +87,7 @@ function seedDemoData() {
     state.payDuringBreak = false;
     state.scannedShifts = [];
     state.scannedImages = [];
+    state.geminiApiKey = "";
     state.notificationSettings = {
         enabled: false,
         time: "05:00"
@@ -876,6 +879,15 @@ function renderCalendar() {
         
         daysContainer.appendChild(dayDiv);
     }
+
+    // 항상 6주(42일) 격자 크기를 맞추기 위해 남은 자리를 빈 셀로 채움
+    const totalRendered = startDayOfWeek + lastDate;
+    const remainingEmptyCells = 42 - totalRendered;
+    for (let i = 0; i < remainingEmptyCells; i++) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.classList.add("calendar-day", "empty");
+        daysContainer.appendChild(emptyDiv);
+    }
 }
 
 // 3. 아르바이트 목록 렌더링
@@ -1049,6 +1061,18 @@ function updateNotificationUI() {
 // --- 5. 이벤트 핸들러 및 모달 로직 ---
 
 function setupEventListeners() {
+    // 브랜드 로고 클릭 시 대시보드로 이동
+    const brandElement = document.querySelector(".brand");
+    if (brandElement) {
+        brandElement.style.cursor = "pointer";
+        brandElement.addEventListener("click", () => {
+            const dashboardTab = document.querySelector('.nav-item[data-tab="tab-dashboard"]');
+            if (dashboardTab) {
+                dashboardTab.click();
+            }
+        });
+    }
+
     // 탭 전환 시스템
     document.querySelectorAll(".nav-item").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1204,6 +1228,7 @@ function setupSettingsTab() {
     const settingsAlertTimeInput = document.getElementById("settings-alert-time");
     const btnSettingsTestAlert = document.getElementById("btn-settings-test-alert");
     const btnResetData = document.getElementById("btn-settings-reset-data");
+    const settingsGeminiKeyInput = document.getElementById("settings-gemini-key");
 
     // 1. 상태 동기화
     if (state.userName) {
@@ -1219,6 +1244,9 @@ function setupSettingsTab() {
     if (settingsAlertTimeInput && state.notificationSettings.time) {
         settingsAlertTimeInput.value = state.notificationSettings.time;
     }
+    if (settingsGeminiKeyInput && state.geminiApiKey) {
+        settingsGeminiKeyInput.value = state.geminiApiKey;
+    }
 
     // 2. 이벤트 리스너 등록
     if (ocrNameInput) {
@@ -1232,6 +1260,12 @@ function setupSettingsTab() {
         settingsUsernameInput.addEventListener("input", (e) => {
             state.userName = e.target.value;
             if (ocrNameInput) ocrNameInput.value = state.userName;
+            saveState();
+        });
+    }
+    if (settingsGeminiKeyInput) {
+        settingsGeminiKeyInput.addEventListener("input", (e) => {
+            state.geminiApiKey = e.target.value.trim();
             saveState();
         });
     }
@@ -1390,6 +1424,14 @@ window.generateJobCode = function(jobId) {
     
     const jobLogs = state.logs.filter(l => l.jobId === jobId);
     
+    // 이 아르바이트 근무 일정에 해당하는 사용자 지정 공휴일 추출
+    const jobHolidays = {};
+    jobLogs.forEach(l => {
+        if (state.customHolidays && state.customHolidays[l.date] !== undefined) {
+            jobHolidays[l.date] = state.customHolidays[l.date];
+        }
+    });
+    
     const payload = {
         job: {
             name: job.name,
@@ -1410,7 +1452,8 @@ window.generateJobCode = function(jobId) {
             breakStartTime: l.breakStartTime || "",
             breakEndTime: l.breakEndTime || "",
             breakMinutes: l.breakMinutes || 0
-        }))
+        })),
+        customHolidays: jobHolidays
     };
     
     try {
@@ -1421,7 +1464,7 @@ window.generateJobCode = function(jobId) {
         }));
         
         navigator.clipboard.writeText(base64Code).then(() => {
-            showToast("코드 생성 및 복사 완료", `'${job.name}' 아르바이트의 설정과 일정 코드가 클립보드에 복사되었습니다! 근무 추가 창에서 등록해 보세요.`, "toast-success");
+            showToast("코드 생성 및 복사 완료", `'${job.name}'의 설정, 일정 및 공휴일 코드가 클립보드에 복사되었습니다! 근무 추가 창에서 등록해 보세요.`, "toast-success");
         }).catch(err => {
             // 복사 실패 시 fallback
             prompt("아래 코드를 복사하여 근무 추가 창에 붙여넣으세요:", base64Code);
@@ -1455,6 +1498,7 @@ window.importJobCode = function() {
         
         const jobData = data.job;
         const logList = data.logs;
+        const customHolidaysData = data.customHolidays || {};
         
         // 1. 동일한 이름의 아르바이트가 있는지 확인
         let targetJob = state.jobs.find(j => j.name === jobData.name);
@@ -1501,11 +1545,19 @@ window.importJobCode = function() {
             }
         });
         
+        // 3. 공휴일 복원 병합
+        if (customHolidaysData) {
+            if (!state.customHolidays) {
+                state.customHolidays = {};
+            }
+            Object.assign(state.customHolidays, customHolidaysData);
+        }
+        
         saveState();
         closeLogModal();
         renderAll();
         
-        showToast("일정 일괄 등록 성공", `'${targetJob.name}' 근무 일정이 등록되었습니다. (신규: ${addedCount}건, 덮어쓰기: ${dupCount}건)`, "toast-success");
+        showToast("일정 일괄 등록 성공", `'${targetJob.name}' 근무 일정 및 공휴일이 등록되었습니다. (신규: ${addedCount}건, 덮어쓰기: ${dupCount}건)`, "toast-success");
         codeInput.value = "";
     } catch (e) {
         console.error("코드 디코딩 및 등록 실패:", e);
@@ -2345,7 +2397,7 @@ function setupOcrScanner() {
             return;
         }
 
-        // 스캔 애니메이션 구동 및 1.5초 시뮬레이션
+        // 스캔 애니메이션 구동 및 2.5초 시뮬레이션
         scanBar.classList.remove("hidden");
         btnAnalyze.disabled = true;
         btnAnalyze.innerText = "⚡ 스케줄 분석 중...";
@@ -2354,68 +2406,207 @@ function setupOcrScanner() {
         let allShifts = [];
         let ocrSuccess = false;
 
-        // Tesseract를 이용하여 비동기로 모든 이미지 OCR 실행
-        const ocrPromises = state.scannedImages.map(imgBase64 => {
-            if (typeof Tesseract !== 'undefined') {
-                return Tesseract.recognize(imgBase64, 'kor+eng')
-                    .then(res => {
-                        const txt = res.data.text;
-                        const parsed = parseOcrText(txt, name, currentYearMonth);
-                        if (parsed.length > 0) {
-                            ocrSuccess = true;
-                            allShifts = allShifts.concat(parsed);
-                        }
+        const apiKey = state.geminiApiKey ? state.geminiApiKey.trim() : "";
+        const geminiRawTextContainer = document.getElementById("gemini-raw-text-container");
+        const geminiRawText = document.getElementById("gemini-raw-text");
+        
+        if (geminiRawTextContainer) geminiRawTextContainer.style.display = "none";
+        if (geminiRawText) geminiRawText.value = "";
+
+        if (apiKey) {
+            // Gemini API 활용 이미지 인식 및 파싱
+            const geminiPromises = state.scannedImages.map(imgBase64 => {
+                const mimeType = imgBase64.split(";")[0].split(":")[1];
+                const base64Data = imgBase64.split(",")[1];
+                
+                const promptText = `당신은 근무 스케줄표 이미지 분석 전문가입니다. 이미지 내에서 사용자의 근무 일정(날짜, 출퇴근 시간, 휴식 시간)을 찾아서 정확한 정보만 추출해 주세요.
+
+사용자 이름: ${name}
+기준 년월: ${currentYearMonth}
+
+[요구사항]
+1. 이미지에 들어있는 모든 한글/영어/숫자 텍스트를 정확하게 인식하여 정리한 '전체 글씨'를 먼저 제공해 주세요.
+2. 그리고 그 텍스트에서 ${name}의 일정을 분석하여 아래와 같은 JSON 형식으로 추출해 주세요. 다른 부연 설명이나 마크다운 백틱 없이 순수 JSON 배열만 반환해야 합니다.
+
+JSON 형식 예시:
+[
+  {
+    "date": "2026-06-08",
+    "startTime": "09:00",
+    "endTime": "18:00",
+    "breakMinutes": 60
+  }
+]
+
+결과는 반드시 아래와 같이 정확하게 구분자(---RAWTEXT--- 및 ---JSON---)를 사용해 작성해 주세요:
+---RAWTEXT---
+(여기에 인식한 이미지의 전체 텍스트 작성)
+---JSON---
+(여기에 추출한 JSON 배열 작성)`;
+
+                return fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptText },
+                                { inlineData: { mimeType: mimeType, data: base64Data } }
+                            ]
+                        }]
                     })
-                    .catch(err => {
-                        console.error("Tesseract recognition error:", err);
-                    });
-            } else {
-                return Promise.resolve();
-            }
-        });
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Gemini API HTTP Error: " + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                    if (!textResult) return;
 
-        // 1.5초 애니메이션 효과를 보장하기 위한 최소 대기 프로미스 추가
-        const minDelayPromise = new Promise(resolve => setTimeout(resolve, 1500));
+                    // RAWTEXT와 JSON 영역 분리
+                    let rawTextPart = "";
+                    let jsonPart = "";
+                    
+                    if (textResult.includes("---RAWTEXT---") && textResult.includes("---JSON---")) {
+                        const parts = textResult.split("---JSON---");
+                        rawTextPart = parts[0].replace("---RAWTEXT---", "").trim();
+                        jsonPart = parts[1].trim();
+                    } else {
+                        rawTextPart = textResult; // 구분자 매칭이 안 되면 전체를 텍스트로
+                    }
 
-        Promise.all([...ocrPromises, minDelayPromise]).then(() => {
-            scanBar.classList.add("hidden");
-            btnAnalyze.disabled = false;
-            btnAnalyze.innerText = "🔍 일정 재분석";
+                    if (rawTextPart && geminiRawText) {
+                        geminiRawText.value += (geminiRawText.value ? "\n\n=== 다음 이미지 ===\n\n" : "") + rawTextPart;
+                        if (geminiRawTextContainer) geminiRawTextContainer.style.display = "block";
+                    }
 
-            // OCR 결과가 있거나 파싱이 잘 된 경우 해당 데이터를 정렬하여 바인딩
-            if (ocrSuccess && allShifts.length > 0) {
-                // 일자 기준 정렬 및 중복 제거
-                const seenDates = new Set();
-                const uniqueShifts = [];
-                allShifts.sort((a, b) => a.date.localeCompare(b.date)).forEach(s => {
-                    if (!seenDates.has(s.date)) {
-                        seenDates.add(s.date);
-                        uniqueShifts.push(s);
+                    if (jsonPart) {
+                        // 백틱 및 JSON 마커 제거 정규식
+                        const cleanedJson = jsonPart.replace(/```json|```/g, "").trim();
+                        try {
+                            const parsedShifts = JSON.parse(cleanedJson);
+                            if (Array.isArray(parsedShifts)) {
+                                parsedShifts.forEach(s => {
+                                    if (s.date && s.startTime && s.endTime) {
+                                        allShifts.push({
+                                            id: `ocr-shift-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                                            date: s.date,
+                                            startTime: s.startTime,
+                                            endTime: s.endTime,
+                                            breakMinutes: Number(s.breakMinutes) || 0,
+                                            checked: true
+                                        });
+                                        ocrSuccess = true;
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.error("JSON 파싱 에러:", e, jsonPart);
+                        }
                     }
                 });
-                state.scannedShifts = uniqueShifts;
-                showToast("분석 완료", `'${name}'님의 스케줄 분석이 완료되었습니다.`, "toast-success");
-            } else {
-                // OCR 결과가 없으면(폴백) 사용자 입력 이름 기반으로 스마트 근무일정 자동 모의생성
+            });
+
+            const minDelayPromise = new Promise(resolve => setTimeout(resolve, 2000));
+
+            Promise.all([...geminiPromises, minDelayPromise]).then(() => {
+                scanBar.classList.add("hidden");
+                btnAnalyze.disabled = false;
+                btnAnalyze.innerText = "🔍 일정 재분석";
+
+                if (ocrSuccess && allShifts.length > 0) {
+                    const seenDates = new Set();
+                    const uniqueShifts = [];
+                    allShifts.sort((a, b) => a.date.localeCompare(b.date)).forEach(s => {
+                        if (!seenDates.has(s.date)) {
+                            seenDates.add(s.date);
+                            uniqueShifts.push(s);
+                        }
+                    });
+                    state.scannedShifts = uniqueShifts;
+                    showToast("제미나이 분석 완료", `'${name}'님의 스케줄 분석이 완료되었습니다.`, "toast-success");
+                } else {
+                    state.scannedShifts = generateFallbackShifts(name, currentYearMonth);
+                    showToast("제미나이 분석 완료 (폴백)", `'${name}'님의 스케줄 일정을 모의 생성했습니다.`, "toast-success");
+                }
+                saveState();
+                renderScannedShifts();
+                updateOcrJobsDropdown();
+            }).catch(err => {
+                console.error("Gemini API Error, falling back to local OCR:", err);
+                showToast("Gemini 에러", "제미나이 분석 중 오류가 발생하여 기본 OCR로 다시 실행합니다.", "toast-danger");
+                // 로컬 OCR로 재시도
+                runLocalOcr();
+            });
+        } else {
+            // API 키가 없으면 로컬 OCR로 바로 가기
+            runLocalOcr();
+        }
+
+        function runLocalOcr() {
+            const ocrPromises = state.scannedImages.map(imgBase64 => {
+                if (typeof Tesseract !== 'undefined') {
+                    return Tesseract.recognize(imgBase64, 'kor+eng')
+                        .then(res => {
+                            const txt = res.data.text;
+                            if (txt && geminiRawText) {
+                                geminiRawText.value += (geminiRawText.value ? "\n\n=== 다음 이미지 ===\n\n" : "") + txt;
+                                if (geminiRawTextContainer) geminiRawTextContainer.style.display = "block";
+                            }
+                            const parsed = parseOcrText(txt, name, currentYearMonth);
+                            if (parsed.length > 0) {
+                                ocrSuccess = true;
+                                allShifts = allShifts.concat(parsed);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Tesseract recognition error:", err);
+                        });
+                } else {
+                    return Promise.resolve();
+                }
+            });
+
+            const minDelayPromise = new Promise(resolve => setTimeout(resolve, 1500));
+
+            Promise.all([...ocrPromises, minDelayPromise]).then(() => {
+                scanBar.classList.add("hidden");
+                btnAnalyze.disabled = false;
+                btnAnalyze.innerText = "🔍 일정 재분석";
+
+                if (ocrSuccess && allShifts.length > 0) {
+                    const seenDates = new Set();
+                    const uniqueShifts = [];
+                    allShifts.sort((a, b) => a.date.localeCompare(b.date)).forEach(s => {
+                        if (!seenDates.has(s.date)) {
+                            seenDates.add(s.date);
+                            uniqueShifts.push(s);
+                        }
+                    });
+                    state.scannedShifts = uniqueShifts;
+                    showToast("로컬 분석 완료", `'${name}'님의 스케줄 분석이 완료되었습니다.`, "toast-success");
+                } else {
+                    state.scannedShifts = generateFallbackShifts(name, currentYearMonth);
+                    showToast("로컬 분석 완료 (폴백)", `'${name}'님의 스케줄 일정을 생성했습니다.`, "toast-success");
+                }
+                
+                saveState();
+                renderScannedShifts();
+                updateOcrJobsDropdown();
+            }).catch(err => {
+                console.error("Local OCR Promise all error:", err);
+                scanBar.classList.add("hidden");
+                btnAnalyze.disabled = false;
+                btnAnalyze.innerText = "🔍 일정 재분석";
+                
                 state.scannedShifts = generateFallbackShifts(name, currentYearMonth);
-                showToast("분석 완료 (폴백)", `'${name}'님의 스케줄 일정을 생성했습니다.`, "toast-success");
-            }
-            
-            saveState();
-            renderScannedShifts();
-            updateOcrJobsDropdown();
-        }).catch(err => {
-            console.error("OCR Promise all error:", err);
-            scanBar.classList.add("hidden");
-            btnAnalyze.disabled = false;
-            btnAnalyze.innerText = "🔍 일정 재분석";
-            
-            state.scannedShifts = generateFallbackShifts(name, currentYearMonth);
-            saveState();
-            renderScannedShifts();
-            updateOcrJobsDropdown();
-            showToast("분석 완료 (오류 폴백)", `'${name}'님의 스케줄 일정을 생성했습니다.`, "toast-success");
-        });
+                saveState();
+                renderScannedShifts();
+                updateOcrJobsDropdown();
+                showToast("분석 완료 (오류 폴백)", `'${name}'님의 스케줄 일정을 생성했습니다.`, "toast-success");
+            });
+        }
     });
 
     // 일괄 등록 버튼 클릭
