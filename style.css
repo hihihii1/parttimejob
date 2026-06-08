@@ -1952,3 +1952,82 @@ input:checked + .slider:before {
     border-color: var(--primary-color);
     background-color: var(--primary-light);
 }
+
+/* --- 야간 모드 (Dark Mode) 스타일 --- */
+body.dark-mode {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border-color: #2d2d2d;
+    --primary-light: #3b2320;
+    --success-light: #064e3b;
+    --danger-light: #7f1d1d;
+    --accent-light: #1e1b4b;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: var(--bg-color) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    background-color: var(--bg-color) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .timeline-wrapper {
+    background-color: #2a2a2a !important;
+}
+
+body.dark-mode .calendar-day.has-log {
+    background-color: #2e1a17;
+}
+
+body.dark-mode .schedule-item {
+    background-color: var(--card-bg);
+}
+
+body.dark-mode .sidebar {
+    background-color: var(--card-bg);
+}
+
+body.dark-mode .sidebar-footer .notification-quick-toggle {
+    background-color: var(--bg-color);
+}
+
+body.dark-mode .badge-disabled {
+    background-color: #2a2a2a;
+    color: #8a8880;
+}
+
+body.dark-mode .modal-card {
+    background-color: var(--card-bg);
+    color: var(--text-main);
+}
+
+body.dark-mode .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+body.dark-mode .table-responsive {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .history-table tr:hover td {
+    background-color: var(--primary-light);
+}
+
+body.dark-mode .history-chart-wrapper {
+    background-color: var(--bg-color);
+}
+

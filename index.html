@@ -380,9 +380,34 @@
                             <div class="form-group" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
                                 <label for="settings-gemini-key">Gemini API Key</label>
                                 <input type="password" id="settings-gemini-key" placeholder="AI 이미지 분석을 위한 Gemini API Key를 입력하세요" style="width: 100%;">
+                            </div>
+                            <div class="form-group" style="margin-top: 12px;">
+                                <label for="settings-gemini-model">Gemini Model</label>
+                                <select id="settings-gemini-model" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 14px; outline: none; background-color: white;">
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (기본)</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                                </select>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
-                                    스케줄 이미지를 업로드할 때 제미나이(Gemini 2.5 Flash)를 사용하여 정확하게 텍스트 및 일정을 추출합니다. 키가 없으면 기본 로컬 OCR(Tesseract)이 동작합니다.
+                                    스케줄 이미지를 업로드할 때 지정한 제미나이 모델을 사용하여 정확하게 텍스트 및 일정을 추출합니다. 키가 없으면 기본 로컬 OCR(Tesseract)이 동작합니다.
                                 </p>
+                            </div>
+                        </div>
+
+                        <!-- Theme Card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <h3>🌗 화면 테마</h3>
+                            <div class="checkbox-options-grid" style="display: block;">
+                                <label class="checkbox-option" style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--bg-color); display: flex; cursor: pointer; transition: all var(--transition-speed); gap: 12px;">
+                                    <input type="checkbox" id="settings-darkmode-toggle" style="margin-top: 4px;">
+                                    <div class="checkbox-label-group">
+                                        <span class="title" style="font-weight: 700; font-size: 14px; display: block; color: var(--text-main);">야간 모드 (Dark Mode)</span>
+                                        <span class="desc" style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; line-height: 1.4;">
+                                            앱의 배경을 어둡게 변경하여 눈의 피로를 줄여줍니다.
+                                        </span>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 

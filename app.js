@@ -14,7 +14,9 @@ let state = {
     scannedImages: [],
     customHolidays: {},
     googleHolidays: {},
-    geminiApiKey: ""
+    geminiApiKey: "",
+    geminiModel: "gemini-2.5-flash",
+    darkMode: false
 };
 
 // 기본 파스텔 색상 정의 (아르바이트별 시각적 구분)
@@ -55,6 +57,14 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function applyDarkMode(enabled) {
+    if (enabled) {
+        document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
+    }
+}
+
 function loadState() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -68,6 +78,9 @@ function loadState() {
             if (state.customHolidays === undefined) state.customHolidays = {};
             if (state.googleHolidays === undefined) state.googleHolidays = {};
             if (state.geminiApiKey === undefined) state.geminiApiKey = "";
+            if (state.geminiModel === undefined) state.geminiModel = "gemini-2.5-flash";
+            if (state.darkMode === undefined) state.darkMode = false;
+            applyDarkMode(state.darkMode);
         } catch (e) {
             console.error("데이터 로드 중 오류 발생, 초기화합니다.", e);
             seedDemoData();
@@ -88,10 +101,13 @@ function seedDemoData() {
     state.scannedShifts = [];
     state.scannedImages = [];
     state.geminiApiKey = "";
+    state.geminiModel = "gemini-2.5-flash";
+    state.darkMode = false;
     state.notificationSettings = {
         enabled: false,
         time: "05:00"
     };
+    applyDarkMode(false);
 
     saveState();
 }
@@ -1229,6 +1245,8 @@ function setupSettingsTab() {
     const btnSettingsTestAlert = document.getElementById("btn-settings-test-alert");
     const btnResetData = document.getElementById("btn-settings-reset-data");
     const settingsGeminiKeyInput = document.getElementById("settings-gemini-key");
+    const settingsGeminiModelSelect = document.getElementById("settings-gemini-model");
+    const settingsDarkModeCheckbox = document.getElementById("settings-darkmode-toggle");
 
     // 1. 상태 동기화
     if (state.userName) {
@@ -1246,6 +1264,12 @@ function setupSettingsTab() {
     }
     if (settingsGeminiKeyInput && state.geminiApiKey) {
         settingsGeminiKeyInput.value = state.geminiApiKey;
+    }
+    if (settingsGeminiModelSelect && state.geminiModel) {
+        settingsGeminiModelSelect.value = state.geminiModel;
+    }
+    if (settingsDarkModeCheckbox) {
+        settingsDarkModeCheckbox.checked = state.darkMode || false;
     }
 
     // 2. 이벤트 리스너 등록
@@ -1267,6 +1291,20 @@ function setupSettingsTab() {
         settingsGeminiKeyInput.addEventListener("input", (e) => {
             state.geminiApiKey = e.target.value.trim();
             saveState();
+        });
+    }
+    if (settingsGeminiModelSelect) {
+        settingsGeminiModelSelect.addEventListener("change", (e) => {
+            state.geminiModel = e.target.value;
+            saveState();
+        });
+    }
+    if (settingsDarkModeCheckbox) {
+        settingsDarkModeCheckbox.addEventListener("change", (e) => {
+            state.darkMode = e.target.checked;
+            saveState();
+            applyDarkMode(state.darkMode);
+            showToast(state.darkMode ? "야간 모드 활성화" : "야간 모드 비활성화", state.darkMode ? "눈이 편안한 야간 모드가 적용되었습니다." : "기본 밝은 모드로 복원되었습니다.");
         });
     }
     if (settingsPayBreakCheckbox) {
@@ -2444,7 +2482,8 @@ JSON 형식 예시:
 ---JSON---
 (여기에 추출한 JSON 배열 작성)`;
 
-                return fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                const model = state.geminiModel || "gemini-2.5-flash";
+                return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -2456,8 +2495,21 @@ JSON 형식 예시:
                         }]
                     })
                 })
-                .then(res => {
-                    if (!res.ok) throw new Error("Gemini API HTTP Error: " + res.status);
+                .then(async res => {
+                    if (!res.ok) {
+                        let errorMsg = "";
+                        try {
+                            const errData = await res.json();
+                            errorMsg = errData.error?.message || JSON.stringify(errData);
+                        } catch (e) {
+                            try {
+                                errorMsg = await res.text();
+                            } catch (textErr) {
+                                errorMsg = "HTTP " + res.status;
+                            }
+                        }
+                        throw new Error(`Gemini API Error (HTTP ${res.status}): ${errorMsg}`);
+                    }
                     return res.json();
                 })
                 .then(data => {
@@ -2535,7 +2587,7 @@ JSON 형식 예시:
                 updateOcrJobsDropdown();
             }).catch(err => {
                 console.error("Gemini API Error, falling back to local OCR:", err);
-                showToast("Gemini 에러", "제미나이 분석 중 오류가 발생하여 기본 OCR로 다시 실행합니다.", "toast-danger");
+                showToast("Gemini 에러", `제미나이 분석 중 오류가 발생했습니다 (${err.message || err}). 기본 OCR로 다시 실행합니다.`, "toast-danger");
                 // 로컬 OCR로 재시도
                 runLocalOcr();
             });
